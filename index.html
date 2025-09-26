@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Herve Mood</title>
+  <meta name="description" content="Herve Mood — exprimez ce que vous ressentez (joie, tristesse, colère...)" />
+  <style>
+    body{font-family:Arial, sans-serif;background:#f4f7fb;margin:0;padding:0;}
+    .container{max-width:900px;margin:auto;padding:20px;}
+    header{text-align:center;margin-bottom:20px;}
+    h1{margin:0;font-size:28px;color:#2563eb;}
+    .card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,0.1);margin-bottom:18px;}
+    textarea,input{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;}
+    .btn{background:#2563eb;color:white;padding:10px 14px;border:none;border-radius:8px;cursor:pointer;}
+    .entries{margin-top:20px;}
+    .entry{background:#fff;border-radius:8px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);margin-bottom:10px;}
+    .small{font-size:13px;color:#666;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Herve Mood</h1>
+      <p>Exprimez ce que vous ressentez — joie, tristesse, colère, amour...</p>
+    </header>
+
+    <section class="card">
+      <h2>Exprimez-vous</h2>
+      <form id="moodForm">
+        <label for="name">Nom (optionnel)</label><br/>
+        <input id="name" type="text" placeholder="Ex: Jean / Anonyme" /><br/><br/>
+        <label for="message">Message</label><br/>
+        <textarea id="message" placeholder="Écrivez ici ce que vous ressentez..."></textarea><br/><br/>
+        <button class="btn" type="submit">Publier</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Flux des ressentis</h2>
+      <div class="entries" id="entries"></div>
+    </section>
+
+    <footer class="small" style="text-align:center;margin-top:20px;">
+      © Herve Mood — Faites preuve de bienveillance. Mode démo (Firebase intégré).
+    </footer>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    // ⚡ Mets ici ta config Firebase
+    const firebaseConfig = {
+      apiKey: "TA_CLE_API",
+      authDomain: "herve-mood.firebaseapp.com",
+      databaseURL: "https://herve-mood-default-rtdb.firebaseio.com",
+      projectId: "herve-mood",
+      storageBucket: "herve-mood.appspot.com",
+      messagingSenderId: "TON_ID",
+      appId: "TON_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const entriesEl = document.getElementById('entries');
+    const form = document.getElementById('moodForm');
+    const nameInput = document.getElementById('name');
+    const msgInput = document.getElementById('message');
+
+    function renderEntry(key, data){
+      const el = document.createElement('div');
+      el.className = 'entry';
+      el.innerHTML = '<strong>' + (data.name || 'Anonyme') + '</strong><br/>' +
+                     '<span>' + data.message + '</span><br/>' +
+                     '<span class="small">' + new Date(data.date).toLocaleString() + '</span>';
+      entriesEl.prepend(el);
+    }
+
+    // Écouter les nouveaux messages en temps réel
+    db.ref('entries').on('child_added', snapshot => {
+      renderEntry(snapshot.key, snapshot.val());
+    });
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = nameInput.value.trim() || 'Anonyme';
+      const message = msgInput.value.trim();
+      if(!message){ alert('Veuillez écrire un message.'); return; }
+      const newEntryRef = db.ref('entries').push();
+      newEntryRef.set({ name, message, date: new Date().toISOString() });
+      nameInput.value = '';
+      msgInput.value = '';
+    });
+  </script>
+</body>
+</html>
